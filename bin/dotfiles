@@ -1,0 +1,208 @@
+#!/bin/bash
+
+set -eu
+
+readonly DOTFILES_ROOT="$HOME/dotfiles"
+readonly DOTFILES="dotfiles"
+
+#===========================================================================#
+# common functions
+#===========================================================================#
+
+print() {
+  printf "\e[4m$DOTFILES\e[0m: "
+  echo "$@"
+}
+
+cmd_exec() {
+  print "$@"
+  "$@"
+}
+
+command_exist() {
+  which "$1" >/dev/null 2>&1
+  return $?
+}
+
+subcommand_exists() {
+  local cmd=$1
+  grep -q "^cmd_$cmd(" "$DOTFILES_ROOT/bin/dotfiles"
+}
+
+warning() {
+  printf "\e[4m$DOTFILES\e[0m: \e[33m[Warning] "
+  echo "$@"
+  printf "\e[0m"
+}
+
+#===========================================================================#
+# commands
+#===========================================================================#
+
+cmd_setup-osx() {
+  # Change shell
+  if [ `echo $SHELL | grep 'bash'` ]; then
+    chsh -s /usr/local/bin/zsh
+  fi
+  cmd_exec cd $DOTFILES_ROOT
+
+  # Link dotfiles command to $PATH
+  if [ -e /usr/local/bin/dotfiles ]; then
+    cp -p /usr/local/bin/dotfiles /usr/local/bin/dotfiles.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/bin/dotfiles /usr/local/bin/dotfiles
+  
+  if [ -e $HOME/.bash_profile ]; then
+    cp -p $HOME/.bash_profile $HOME/.bash_profile.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.bash_profile $HOME
+  
+  if [ -e $HOME/.bashrc ]; then
+    cp -p $HOME/.bashrc $HOME/.bashrc.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.bashrc $HOME
+  
+  if [ -e $HOME/.editorconfig ]; then
+    cp -p $HOME/.editorconfig $HOME/.editorconfig.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.editorconfig $HOME
+
+  if [ -e $HOME/.gitconfig ]; then
+    cp -p $HOME/.gitconfig $HOME/.gitconfig.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.gitconfig $HOME
+
+  if [ -e $HOME/.tmux.conf ]; then
+    cp -p $HOME/.tmux.conf $HOME/.tmux.conf.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.tmux.conf $HOME
+  
+  if [ -e $HOME/.vimrc ]; then
+    cp -p $HOME/.vimrc $HOME/.vimrc.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.vimrc $HOME
+  
+  if [ -e $HOME/.zshenv ]; then
+    cp -p $HOME/.zshenv $HOME/.zshenv.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.zshenv $HOME
+  
+  if [ -e $HOME/.zshrc ]; then
+    cp -p $HOME/.zshrc $HOME/.zshrc.org
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.zshrc $HOME
+  
+  if [ -d $HOME/.vim/colors ]; then
+    cp -rp $HOME/.vim/colors/ $HOME/.vim/colors.org/
+  fi
+  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/colors/m $HOME/.vim
+
+  # Install Homebrew
+  if ! command_exist brew; then
+    cmd_exec  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    exec $SHELL
+  fi
+
+  # Install all dependencies in a Brewfile.
+  cmd_exec brew bundle --verbose --file 'package/Brewfile.first'
+
+  # Install anyenv
+  if ! command_exist anyenv; then
+    cmd_exec git clone https://github.com/anyenv/anyenv ~/.anyenv
+    echo 'export PATH="$HOME/.anyenv/bin:$PATH"' >> ~/.zshrc
+    echo 'eval "$(anyenv init -)"' >> ~/.zshrc
+    mkdir -p $(~/.anyenv/bin/anyenv root)/plugins
+    git clone https://github.com/znz/anyenv-update.git $(anyenv root)/plugins/anyenv-update
+    cmd_exec ~/.anyenv/bin/anyenv install --init
+    cmd_exec ~/.anyenv/bin/anyenv update
+  fi
+  ! command_exist rbenv  && cmd_exec anyenv install rbenv
+  ! command_exist pyenv  && cmd_exec anyenv install pyenv
+  ! command_exist nodenv && cmd_exec anyenv install nodenv
+
+  # Install poetry
+  if ! command_exist poetry; then
+    cmd_exec /usr/bin/python -c "$(curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py)"
+    echo 'export PATH="$HOME/.poetry/bin:$PATH"' >> ~/.zshrc
+    cmd_exec ~/.poetry/bin/poetry self update
+    cmd_exec ~/.poetry/bin/poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
+    cmd_exec ~/.poetry/bin/poetry config virtualenvs.in-project true
+  fi
+  # Setup Atom
+  #if ! command_exist apm; then
+  #  cmd_exec apm install sync-settings
+  #fi
+  cmd_exec brew bundle --verbose --file 'package/Brewfile.second'
+  exec $SHELL -l
+}
+
+cmd_setup-linux() {
+  :
+}
+
+cmd_link() {
+  cmd_exec cd "$DOTFILES_ROOT/home"
+
+  for filename in .??*; do
+    local file_dotfiles="$DOTFILES_ROOT/home/$filename"
+    local file_home="$HOME/$filename"
+
+    print
+    if [[ ! -e $file_home ]]; then
+      print "Creating symlink at $file_home"
+      cmd_exec ln -s "$file_dotfiles" "$file_home"
+    else
+      if [[ -L $file_home ]]; then
+        warning "symlink $file_home already exists."
+      else
+        warning "$file_home already exists but is not a symlink."
+      fi
+      while true; do
+        print -n "Do you want to overwrite it? [Y/n] "
+        read answer
+        case "$answer" in
+          [yY])
+            print "Creating symlink at $file_home"
+            cmd_exec ln -sf "$file_dotfiles" "$file_home"
+            break
+            ;;
+          [nN])
+            break
+            ;;
+        esac
+      done
+    fi
+  done
+}
+
+cmd_help() {
+  echo "Script for dotfiles"
+  echo
+  echo "Usage:"
+  echo "    bin/dotfiles [COMMAND] [ARGS...]"
+  echo
+  echo "Commands:"
+  echo "    setup-osx    Setup macOS"
+  echo "    setup-linux  Setup Linux"
+  echo "    link         Link dotfiles"
+}
+
+# aliases
+cmd_-h() { cmd_help; }
+cmd_--help() { cmd_help; }
+
+#===========================================================================#
+
+main() {
+  local cmd=$1
+  shift
+
+  if subcommand_exists "$cmd"; then
+    "cmd_$cmd" "$@"
+  else
+    echo "ERROR: '$cmd' is not a dotfiles command."
+  exit 1
+  fi
+}
+
+main "$@"

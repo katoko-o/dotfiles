@@ -1,0 +1,4 @@
+brew 'git'
+brew 'zsh'
+brew 'zsh-completions'
+cask 'iterm2'

@@ -1,0 +1,20 @@
+[color]
+	branch      = auto
+	diff        = auto
+	grep        = auto
+	interactive = auto
+	status      = auto
+	ui          = auto
+[core]
+	editor = vim
+  ignorecase = false
+  quotepath = false
+  excludesfile = ~/.gitignore_global
+[push]
+	defalut = current
+[rebase]
+	autosquash = true
+[credential]
+  helper = 'cache --timeout=86400'
+[include]
+	path = ~/.gitconfig.local
