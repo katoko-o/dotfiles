@@ -56,6 +56,7 @@ print
 
 case $OSTYPE in
   darwin*)
+    cmd_exec $DOTFILES_ROOT/bin/dotfiles link
     cmd_exec $DOTFILES_ROOT/bin/dotfiles setup-osx
     ;;
   linux*)

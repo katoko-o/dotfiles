@@ -40,71 +40,31 @@ warning() {
 #===========================================================================#
 
 cmd_setup-osx() {
+  cmd_link
+  if ! command_exist xcode-select; then
+    cmd_exec xcode-select --install
+  fi
+
   # Change shell
   if [ `echo $SHELL | grep 'bash'` ]; then
-    chsh -s /usr/local/bin/zsh
+    cmd_exec chsh -s /usr/local/bin/zsh
+    exec $SHELL -l
   fi
   cmd_exec cd $DOTFILES_ROOT
 
   # Link dotfiles command to $PATH
-  if [ -e /usr/local/bin/dotfiles ]; then
-    cp -p /usr/local/bin/dotfiles /usr/local/bin/dotfiles.org
+  if [ ! -L /usr/local/bin/dotfiles ] && [ ! -e /usr/local/bin/dotfiles ]; then
+    cmd_exec ln -s $DOTFILES_ROOT/bin/dotfiles /usr/local/bin/dotfiles
   fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/bin/dotfiles /usr/local/bin/dotfiles
-  
-  if [ -e $HOME/.bash_profile ]; then
-    cp -p $HOME/.bash_profile $HOME/.bash_profile.org
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.bash_profile $HOME
-  
-  if [ -e $HOME/.bashrc ]; then
-    cp -p $HOME/.bashrc $HOME/.bashrc.org
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.bashrc $HOME
-  
-  if [ -e $HOME/.editorconfig ]; then
-    cp -p $HOME/.editorconfig $HOME/.editorconfig.org
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.editorconfig $HOME
-
-  if [ -e $HOME/.gitconfig ]; then
-    cp -p $HOME/.gitconfig $HOME/.gitconfig.org
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.gitconfig $HOME
-
-  if [ -e $HOME/.tmux.conf ]; then
-    cp -p $HOME/.tmux.conf $HOME/.tmux.conf.org
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.tmux.conf $HOME
-  
-  if [ -e $HOME/.vimrc ]; then
-    cp -p $HOME/.vimrc $HOME/.vimrc.org
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.vimrc $HOME
-  
-  if [ -e $HOME/.zshenv ]; then
-    cp -p $HOME/.zshenv $HOME/.zshenv.org
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.zshenv $HOME
-  
-  if [ -e $HOME/.zshrc ]; then
-    cp -p $HOME/.zshrc $HOME/.zshrc.org
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/.zshrc $HOME
-  
-  if [ -d $HOME/.vim/colors ]; then
-    cp -rp $HOME/.vim/colors/ $HOME/.vim/colors.org/
-  fi
-  cmd_exec sudo ln -sf $DOTFILES_ROOT/home/colors/m $HOME/.vim
 
   # Install Homebrew
   if ! command_exist brew; then
     cmd_exec  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-    exec $SHELL
+    exec $SHELL -l
   fi
 
   # Install all dependencies in a Brewfile.
-  cmd_exec brew bundle --verbose --file 'package/Brewfile.first'
+  #cmd_exec brew bundle --verbose --file 'package/Brewfile.first'
 
   # Install anyenv
   if ! command_exist anyenv; then
@@ -115,10 +75,73 @@ cmd_setup-osx() {
     git clone https://github.com/znz/anyenv-update.git $(anyenv root)/plugins/anyenv-update
     cmd_exec ~/.anyenv/bin/anyenv install --init
     cmd_exec ~/.anyenv/bin/anyenv update
+    source ~/.zshrc
   fi
   ! command_exist rbenv  && cmd_exec anyenv install rbenv
   ! command_exist pyenv  && cmd_exec anyenv install pyenv
   ! command_exist nodenv && cmd_exec anyenv install nodenv
+
+  # Install latest ruby with rbenv
+  local latest_ruby="$(eval rbenv install --list \
+    | grep -v - \
+    | grep -vE "([a-z]|[A-Z])" \
+    | tail -1)"
+ 
+  while true; do
+    print -n "Do you want to Install Ruby $latest_ruby? [Y/n] "
+    read answer
+    case "${answer:-Y}" in
+      [yY])
+        cmd_exec rbenv install $latest_ruby && rbenv rehash && rbenv global $latest_ruby
+        break
+        ;;
+      [nN])
+        break
+        ;;
+    esac
+  done
+  
+
+  # Install latest python with pyenv
+  local latest_python2="$(eval pyenv install --list \
+    | grep -v - \
+    | grep -vE "([a-z]|[A-Z])" \
+    | grep "2.7" \
+    | tail -1)"
+
+  while true; do
+    print -n "Do you want to Install Python2 $latest_python2? [Y/n] "
+    read answer
+    case "${answer:-Y}" in
+      [yY])
+        cmd_exec pyenv install $latest_python2 && rehash
+        break
+        ;;
+      [nN])
+        break
+        ;;
+    esac
+  done
+ 
+
+  local latest_python3="$(eval pyenv install --list \
+    | grep -v - \
+    | grep -vE "([a-z]|[A-Z])" \
+    | tail -1)"
+  
+  while true; do
+    print -n "Do you want to Install Python3 $latest_python3? [Y/n] "
+    read answer
+    case "${answer:-Y}" in
+      [yY])
+        cmd_exec pyenv install $latest_python3 && rehash && pyenv global $latest_python3
+        break
+        ;;
+      [nN])
+        break
+        ;;
+    esac
+  done
 
   # Install poetry
   if ! command_exist poetry; then
@@ -132,7 +155,7 @@ cmd_setup-osx() {
   #if ! command_exist apm; then
   #  cmd_exec apm install sync-settings
   #fi
-  cmd_exec brew bundle --verbose --file 'package/Brewfile.second'
+  #cmd_exec brew bundle --verbose --file 'package/Brewfile.second'
   exec $SHELL -l
 }
 
@@ -160,7 +183,7 @@ cmd_link() {
       while true; do
         print -n "Do you want to overwrite it? [Y/n] "
         read answer
-        case "$answer" in
+        case "${answer:-Y}" in
           [yY])
             print "Creating symlink at $file_home"
             cmd_exec ln -sf "$file_dotfiles" "$file_home"
