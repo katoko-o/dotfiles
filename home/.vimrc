@@ -1,6 +1,9 @@
 colorscheme molokai
 syntax on
 
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
 set backspace=indent,eol,start
 
 set tabstop=2
@@ -48,36 +51,6 @@ if &term =~ "xterm"
   inoremap <special> <expr> <Esc>[200~ XTermPasteBegin("")
 endif
 
-
-"NeoBundle
-if has('vim_starting')
-    " 初回起動時のみruntimepathにNeoBundleのパスを指定する
-    set runtimepath+=~/.vim/bundle/neobundle.vim/
-
-    " NeoBundleが未インストールであればgit cloneする・・・・・・①
-    if !isdirectory(expand("~/.vim/bundle/neobundle.vim/"))
-        echo "install NeoBundle..."
-        :call system("git clone git://github.com/Shougo/neobundle.vim ~/.vim/bundle/neobundle.vim")
-    endif
-endif
-
-call neobundle#begin(expand('~/.vim/bundle/'))
-
-" インストールするVimプラグインを以下に記述
-" NeoBundle自身を管理
-NeoBundleFetch 'Shougo/neobundle.vim'
-"----------------------------------------------------------
-" ここに追加したいVimプラグインを記述する・・・・・・②
-
-"カッコの自動閉じ
-NeoBundle 'Townk/vim-autoclose'
-
-" ステータスラインの表示内容強化
-NeoBundle 'itchyny/lightline.vim'
-
-"sudo vimのときにも設定が反映される(vim sudo:xxx)
-NeoBundle 'sudo.vim'
-
 "----------------------------------------------------------
 " ステータスラインの設定
 "----------------------------------------------------------
@@ -86,19 +59,21 @@ set showmode " 現在のモードを表示
 set showcmd " 打ったコマンドをステータスラインの下に表示
 set ruler " ステータスラインの右側にカーソルの現在位置を表示する
 
-" インデントの可視化
-NeoBundle 'Yggdroot/indentLine'
-
-
 " Plugin key-mappings.
 inoremap <expr><C-g>     neocomplcache#undo_completion()
 inoremap <expr><C-l>     neocomplcache#complete_common_string()
 
-"----------------------------------------------------------
-call neobundle#end()
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
 
-" ファイルタイプ別のVimプラグイン/インデントを有効にする
-filetype plugin indent on
+Plugin 'VundleVim/Vundle.vim'
+Plugin 'tpope/vim-fugitive'
+Plugin 'git://git.wincent.com/command-t.git'
+Plugin 'file:///home/gmarik/path/to/plugin'
+Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
+Plugin 'vim-airline/vim-airline'
 
-" 未インストールのVimプラグインがある場合、インストールするかどうかを尋ねてくれるようにする設定・・・・・・③
-NeoBundleCheck
+" All of your Plugins must be added before the following line
+call vundle#end()            " required
+filetype plugin indent on    " required

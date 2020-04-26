@@ -55,7 +55,6 @@ cmd_setup-osx() {
   # Install Homebrew
   if ! command_exist brew; then
     cmd_exec  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-    exec $SHELL -l
   fi
 
   # Install all dependencies in a Brewfile.
@@ -63,37 +62,54 @@ cmd_setup-osx() {
 
   # Change shell
   if [ `echo $SHELL | grep 'bash'` ]; then
+    sudo bash -c '/usr/local/bin/zsh >> /etc/shells'
     cmd_exec chsh -s /usr/local/bin/zsh
-    exec $SHELL -l
+  fi
+
+  # Install Vundle for vim
+  if [ ! -d ~/.vim/bundle/Vundle.vim ]; then
+    cmd_exec git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
   fi
 
   # Install anyenv
-  if ! command_exist anyenv; then
+  if ! command_exist anyenv && ! -e ~/.anyenv; then
     cmd_exec git clone https://github.com/anyenv/anyenv ~/.anyenv
     echo 'export PATH="$HOME/.anyenv/bin:$PATH"' >> ~/.zshrc
     echo 'eval "$(anyenv init -)"' >> ~/.zshrc
     mkdir -p $(~/.anyenv/bin/anyenv root)/plugins
-    git clone https://github.com/znz/anyenv-update.git $(anyenv root)/plugins/anyenv-update
-    cmd_exec ~/.anyenv/bin/anyenv install --init
+    git clone https://github.com/znz/anyenv-update.git $(~/.anyenv/bin/anyenv root)/plugins/anyenv-update
+    if [ -d ~/.config/anyenv ]; then
+      cmd_exec ~/.anyenv/bin/anyenv install --init
+    fi
     cmd_exec ~/.anyenv/bin/anyenv update
-    source ~/.zshrc
   fi
-  ! command_exist rbenv  && cmd_exec anyenv install rbenv
-  ! command_exist pyenv  && cmd_exec anyenv install pyenv
-  ! command_exist nodenv && cmd_exec anyenv install nodenv
+  ! command_exist rbenv  && cmd_exec ~/.anyenv/bin/anyenv install rbenv
+  ! command_exist pyenv  && cmd_exec ~/.anyenv/bin/anyenv install pyenv
+  ! command_exist nodenv && cmd_exec ~/.anyenv/bin/anyenv install nodenv
 
-  # Install latest ruby with rbenv
-  local latest_ruby="$(eval rbenv install --list \
-    | grep -v - \
-    | grep -vE "([a-z]|[A-Z])" \
-    | tail -1)"
- 
+  # Install latest ruby with rbenv 
+  if ! command_exist rbenv; then
+    local latest_ruby="$(eval ~/.anyenv/envs/rbenv/bin/rbenv install --list \
+     | grep -v - \
+     | grep -vE "([a-z]|[A-Z])" \
+     | tail -1)"
+  else
+    local latest_ruby="$(eval rbenv install --list \
+     | grep -v - \
+     | grep -vE "([a-z]|[A-Z])" \
+     | tail -1)"
+  fi
+
   while true; do
     print -n "Do you want to Install Ruby $latest_ruby? [Y/n] "
     read answer
-    case "$answer" in
+    case "${answer:-Y}" in
       [yY])
-        cmd_exec rbenv install $latest_ruby && rbenv rehash && rbenv global $latest_ruby
+        if ! command_exist rbenv; then
+          cmd_exec ~/.anyenv/envs/rbenv/bin/rbenv install $latest_ruby && ~/.anyenv/envs/rbenv/bin/rbenv rehash && ~/.anyenv/envs/rbenv/bin/rbenv global $latest_ruby
+        else
+          cmd_exec rbenv install $latest_ruby && rbenv rehash && rbenv global $latest_ruby
+        fi
         break
         ;;
       [nN])
@@ -104,18 +120,39 @@ cmd_setup-osx() {
   
 
   # Install latest python with pyenv
-  local latest_python2="$(eval pyenv install --list \
-    | grep -v - \
-    | grep -vE "([a-z]|[A-Z])" \
-    | grep "2.7" \
-    | tail -1)"
-
+  if ! command_exist pyenv; then
+    local latest_python2="$(eval ~/.anyenv/envs/rbenv/bin/pyenv install --list \
+     | grep -v - \
+     | grep -vE "([a-z]|[A-Z])" \
+     | grep "2.7" \
+     | tail -1)"
+    local latest_python3="$(eval ~/.anyenv/envs/rbenv/bin/pyenv install --list \
+     | grep -v - \
+     | grep -vE "([a-z]|[A-Z])" \
+     | tail -1)"
+  else
+    local latest_python2="$(eval pyenv install --list \
+     | grep -v - \
+     | grep -vE "([a-z]|[A-Z])" \
+     | grep "2.7" \
+     | tail -1)"
+    local latest_python3="$(eval pyenv install --list \
+     | grep -v - \
+     | grep -vE "([a-z]|[A-Z])" \
+     | tail -1)"
+  fi
+         
+ 
   while true; do
     print -n "Do you want to Install Python2 $latest_python2? [Y/n] "
     read answer
-    case "$answer" in
+    case "${answer:-Y}" in
       [yY])
-        cmd_exec pyenv install $latest_python2 && rehash
+        if ! command_exist pyenv; then
+          cmd_exec ~/.anyenv/envs/rbenv/bin/pyenv install $latest_python2 && ~/.anyenv/envs/rbenv/bin/pyenv rehash
+        else
+          cmd_exec pyenv install $latest_python2 && pyenv rehash
+        fi
         break
         ;;
       [nN])
@@ -125,17 +162,17 @@ cmd_setup-osx() {
   done
  
 
-  local latest_python3="$(eval pyenv install --list \
-    | grep -v - \
-    | grep -vE "([a-z]|[A-Z])" \
-    | tail -1)"
   
   while true; do
     print -n "Do you want to Install Python3 $latest_python3? [Y/n] "
     read answer
-    case "$answer" in
+    case "${answer:-Y}" in
       [yY])
-        cmd_exec pyenv install $latest_python3 && rehash && pyenv global $latest_python3
+        if ! command_exist pyenv; then
+          cmd_exec ~/.anyenv/envs/rbenv/bin/pyenv install $latest_python3 && ~/.anyenv/envs/rbenv/bin/pyenv rehash && ~/.anyenv/envs/rbenv/bin/pyenv global $latest_python3
+        else
+          cmd_exec pyenv install $latest_python3 && pyenv rehash && pyenv global $latest_python3
+        fi
         break
         ;;
       [nN])
@@ -184,7 +221,7 @@ cmd_link() {
       while true; do
         print -n "Do you want to overwrite it? [Y/n] "
         read answer
-        case "$answer" in
+        case "${answer:-Y}" in
           [yY])
             print "Creating symlink at $file_home"
             cmd_exec ln -sf "$file_dotfiles" "$file_home"

@@ -1,0 +1,1 @@
+/Users/katoko/dotfiles/home/.vim

@@ -37,7 +37,7 @@ if [[ -d "$DOTFILES_ROOT" ]]; then
   while true; do
     print -n "Do you want to overwrite it? [Y/n] "
     read answer
-    case "$answer" in
+    case "${answer:-Y}" in
       [yY])
         cmd_exec rm -fr $DOTFILES_ROOT
         print
