@@ -45,11 +45,6 @@ cmd_setup-osx() {
     cmd_exec xcode-select --install
   fi
 
-  # Change shell
-  if [ `echo $SHELL | grep 'bash'` ]; then
-    cmd_exec chsh -s /usr/local/bin/zsh
-    exec $SHELL -l
-  fi
   cmd_exec cd $DOTFILES_ROOT
 
   # Link dotfiles command to $PATH
@@ -64,7 +59,13 @@ cmd_setup-osx() {
   fi
 
   # Install all dependencies in a Brewfile.
-  #cmd_exec brew bundle --verbose --file 'package/Brewfile.first'
+  cmd_exec brew bundle --verbose --file 'package/Brewfile.first'
+
+  # Change shell
+  if [ `echo $SHELL | grep 'bash'` ]; then
+    cmd_exec chsh -s /usr/local/bin/zsh
+    exec $SHELL -l
+  fi
 
   # Install anyenv
   if ! command_exist anyenv; then
@@ -90,7 +91,7 @@ cmd_setup-osx() {
   while true; do
     print -n "Do you want to Install Ruby $latest_ruby? [Y/n] "
     read answer
-    case "${answer:-Y}" in
+    case "$answer" in
       [yY])
         cmd_exec rbenv install $latest_ruby && rbenv rehash && rbenv global $latest_ruby
         break
@@ -112,7 +113,7 @@ cmd_setup-osx() {
   while true; do
     print -n "Do you want to Install Python2 $latest_python2? [Y/n] "
     read answer
-    case "${answer:-Y}" in
+    case "$answer" in
       [yY])
         cmd_exec pyenv install $latest_python2 && rehash
         break
@@ -132,7 +133,7 @@ cmd_setup-osx() {
   while true; do
     print -n "Do you want to Install Python3 $latest_python3? [Y/n] "
     read answer
-    case "${answer:-Y}" in
+    case "$answer" in
       [yY])
         cmd_exec pyenv install $latest_python3 && rehash && pyenv global $latest_python3
         break
@@ -155,7 +156,7 @@ cmd_setup-osx() {
   #if ! command_exist apm; then
   #  cmd_exec apm install sync-settings
   #fi
-  #cmd_exec brew bundle --verbose --file 'package/Brewfile.second'
+  cmd_exec brew bundle --verbose --file 'package/Brewfile.second'
   exec $SHELL -l
 }
 
@@ -183,7 +184,7 @@ cmd_link() {
       while true; do
         print -n "Do you want to overwrite it? [Y/n] "
         read answer
-        case "${answer:-Y}" in
+        case "$answer" in
           [yY])
             print "Creating symlink at $file_home"
             cmd_exec ln -sf "$file_dotfiles" "$file_home"
