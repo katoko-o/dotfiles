@@ -1,5 +1,5 @@
 export CLICOLOR=1
-#export LSCOLORS=gxfxcxdxbxegedabagacad
+export LSCOLORS=gxfxcxdxbxegedabagacad
 
 # 環境変数
 export LANG=ja_JP.UTF-8
@@ -124,10 +124,4 @@ alias vi='vim'
 
 export PATH="$HOME/.anyenv/bin:$PATH"
 eval "$(anyenv init -)"
-export PATH="$HOME/.anyenv/bin:$PATH"
-eval "$(anyenv init -)"
-export PATH="$HOME/.poetry/bin:$PATH"
-export PATH="$HOME/.poetry/bin:$PATH"
-export PATH="$HOME/.poetry/bin:$PATH"
-export PATH="$HOME/.poetry/bin:$PATH"
 export PATH="$HOME/.poetry/bin:$PATH"
