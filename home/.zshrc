@@ -121,7 +121,9 @@ alias mv='mv -i'
 alias vi='vim'
 
 
-export PATH="$HOME/.anyenv/bin:$PATH"
+#export PATH="$HOME/.anyenv/bin:$PATH"
+export PATH="/Users/kato/.anyenv/envs/rbenv/bin:$PATH"
+#export PATH="$HOME/.anyenv/bin:$PATH"
 eval "$(anyenv init -)"
 export PATH="$HOME/.poetry/bin:$PATH"
 
@@ -141,3 +143,4 @@ function peco-select-history() {
 }
 zle -N peco-select-history
 bindkey '^r' peco-select-history
+export PATH="$HOME/.poetry/bin:$PATH"

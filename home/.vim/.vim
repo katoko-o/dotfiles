@@ -1,1 +1,1 @@
-/Users/katoko/dotfiles/home/.vim
+/Users/kato/dotfiles/home/.vim

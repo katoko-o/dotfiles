@@ -61,9 +61,11 @@ cmd_setup-osx() {
   cmd_exec brew bundle --verbose --file 'package/Brewfile.first'
 
   # Change shell
+  # Error 出たら /etc/shells の書き込みがうまくいっているか確認
   if [ `echo $SHELL | grep 'bash'` ]; then
     sudo bash -c '/usr/local/bin/zsh >> /etc/shells'
     cmd_exec chsh -s /usr/local/bin/zsh
+    cmd_exec exit
   fi
 
   # Install Vundle for vim
@@ -73,19 +75,19 @@ cmd_setup-osx() {
 
   # Install anyenv
   if ! command_exist anyenv && ! -e ~/.anyenv; then
-    cmd_exec git clone https://github.com/anyenv/anyenv ~/.anyenv
-    echo 'export PATH="$HOME/.anyenv/bin:$PATH"' >> ~/.zshrc
-    echo 'eval "$(anyenv init -)"' >> ~/.zshrc
-    mkdir -p $(~/.anyenv/bin/anyenv root)/plugins
-    git clone https://github.com/znz/anyenv-update.git $(~/.anyenv/bin/anyenv root)/plugins/anyenv-update
+    git clone https://github.com/anyenv/anyenv ~/.anyenv
+    cmd_exec anyenv init
+    mkdir -p $(/usr/local/bin/anyenv root)/plugins
+    git clone https://github.com/znz/anyenv-update.git $(/usr/local/bin/anyenv root)/plugins/anyenv-update
+    git clone https://github.com/znz/anyenv-git.git $(/usr/local/bin/anyenv root)/plugins/anyenv-git
     if [ -d ~/.config/anyenv ]; then
-      cmd_exec ~/.anyenv/bin/anyenv install --init
+      cmd_exec /usr/local/bin/anyenv install --init
     fi
-    cmd_exec ~/.anyenv/bin/anyenv update
+    cmd_exec /usr/local/bin/anyenv update
   fi
-  ! command_exist rbenv  && cmd_exec ~/.anyenv/bin/anyenv install rbenv
-  ! command_exist pyenv  && cmd_exec ~/.anyenv/bin/anyenv install pyenv
-  ! command_exist nodenv && cmd_exec ~/.anyenv/bin/anyenv install nodenv
+  ! command_exist rbenv  && cmd_exec /usr/local/bin/anyenv install rbenv
+  ! command_exist pyenv  && cmd_exec /usr/local/bin/anyenv install pyenv
+  ! command_exist nodenv && cmd_exec /usr/local/bin/anyenv install nodenv
 
   # Install latest ruby with rbenv 
   if ! command_exist rbenv; then
@@ -121,12 +123,12 @@ cmd_setup-osx() {
 
   # Install latest python with pyenv
   if ! command_exist pyenv; then
-    local latest_python2="$(eval ~/.anyenv/envs/rbenv/bin/pyenv install --list \
+    local latest_python2="$(eval ~/.anyenv/envs/pyenv/bin/pyenv install --list \
      | grep -v - \
      | grep -vE "([a-z]|[A-Z])" \
      | grep "2.7" \
      | tail -1)"
-    local latest_python3="$(eval ~/.anyenv/envs/rbenv/bin/pyenv install --list \
+    local latest_python3="$(eval ~/.anyenv/envs/pyenv/bin/pyenv install --list \
      | grep -v - \
      | grep -vE "([a-z]|[A-Z])" \
      | tail -1)"
@@ -149,7 +151,7 @@ cmd_setup-osx() {
     case "${answer:-Y}" in
       [yY])
         if ! command_exist pyenv; then
-          cmd_exec ~/.anyenv/envs/rbenv/bin/pyenv install $latest_python2 && ~/.anyenv/envs/rbenv/bin/pyenv rehash
+          cmd_exec ~/.anyenv/envs/pyenv/bin/pyenv install $latest_python2 && ~/.anyenv/envs/rbenv/bin/pyenv rehash
         else
           cmd_exec pyenv install $latest_python2 && pyenv rehash
         fi
@@ -169,7 +171,7 @@ cmd_setup-osx() {
     case "${answer:-Y}" in
       [yY])
         if ! command_exist pyenv; then
-          cmd_exec ~/.anyenv/envs/rbenv/bin/pyenv install $latest_python3 && ~/.anyenv/envs/rbenv/bin/pyenv rehash && ~/.anyenv/envs/rbenv/bin/pyenv global $latest_python3
+          cmd_exec ~/.anyenv/envs/pyenv/bin/pyenv install $latest_python3 && ~/.anyenv/envs/rbenv/bin/pyenv rehash && ~/.anyenv/envs/pyenv/bin/pyenv global $latest_python3
         else
           cmd_exec pyenv install $latest_python3 && pyenv rehash && pyenv global $latest_python3
         fi
