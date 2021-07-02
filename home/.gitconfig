@@ -21,3 +21,5 @@
 [user]
 	name = Kohei Kato
 	email = 
+[credential]
+	helper = osxkeychain
