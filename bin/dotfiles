@@ -41,6 +41,7 @@ warning() {
 
 cmd_setup-osx() {
   cmd_link
+  cmd_exec git config --global credential.helper osxkeychain
   if ! command_exist xcode-select; then
     cmd_exec xcode-select --install
   fi
