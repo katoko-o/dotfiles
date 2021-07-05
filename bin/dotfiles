@@ -55,6 +55,7 @@ cmd_setup-osx() {
 
   # Install Homebrew
   if ! command_exist brew; then
+    cmd_exec su kato
     cmd_exec  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
   fi
 
@@ -197,7 +198,15 @@ cmd_setup-osx() {
   #  cmd_exec apm install sync-settings
   #fi
   cmd_exec brew bundle --verbose --file 'package/Brewfile.second'
-  exec $SHELL -l
+  
+  while read package
+  do
+    cmd_exec code --install-extension $package
+  done < ./package/vscode-extention
+
+  cmd_exec echo "======================"
+  cmd_exec echo "ALL setup is finished."
+  cmd_exec echo "======================"
 }
 
 cmd_setup-linux() {
