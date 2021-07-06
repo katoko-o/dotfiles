@@ -93,26 +93,44 @@ cmd_setup-osx() {
 
   # Install latest ruby with rbenv 
   if ! command_exist rbenv; then
-    local latest_ruby="$(eval ~/.anyenv/envs/rbenv/bin/rbenv install --list \
+    local latest_ruby2="$(eval ~/.anyenv/envs/rbenv/bin/rbenv install --list \
      | grep -v - \
      | grep -vE "([a-z]|[A-Z])" \
+     | grep "2.7" \
      | tail -1)"
-  else
-    local latest_ruby="$(eval rbenv install --list \
+    local latest_ruby3="$(eval ~/.anyenv/envs/rbenv/bin/rbenv install --list \
      | grep -v - \
      | grep -vE "([a-z]|[A-Z])" \
      | tail -1)"
   fi
 
   while true; do
-    print -n "Do you want to Install Ruby $latest_ruby? [Y/n] "
+    print -n "Do you want to Install Ruby $latest_ruby2? [Y/n] "
     read answer
     case "${answer:-Y}" in
       [yY])
         if ! command_exist rbenv; then
-          cmd_exec ~/.anyenv/envs/rbenv/bin/rbenv install $latest_ruby && ~/.anyenv/envs/rbenv/bin/rbenv rehash && ~/.anyenv/envs/rbenv/bin/rbenv global $latest_ruby
+          cmd_exec ~/.anyenv/envs/rbenv/bin/rbenv install $latest_ruby2 && ~/.anyenv/envs/rbenv/bin/rbenv rehash && ~/.anyenv/envs/rbenv/bin/rbenv global $latest_ruby2
         else
-          cmd_exec rbenv install $latest_ruby && rbenv rehash && rbenv global $latest_ruby
+          cmd_exec rbenv install $latest_ruby2 && rbenv rehash && rbenv global $latest_ruby2
+        fi
+        break
+        ;;
+      [nN])
+        break
+        ;;
+    esac
+  done
+
+  while true; do
+    print -n "Do you want to Install Ruby $latest_ruby3? [Y/n] "
+    read answer
+    case "${answer:-Y}" in
+      [yY])
+        if ! command_exist rbenv; then
+          cmd_exec ~/.anyenv/envs/rbenv/bin/rbenv install $latest_ruby3 && ~/.anyenv/envs/rbenv/bin/rbenv rehash && ~/.anyenv/envs/rbenv/bin/rbenv global $latest_ruby3
+        else
+          cmd_exec rbenv install $latest_ruby3 && rbenv rehash && rbenv global $latest_ruby3
         fi
         break
         ;;
@@ -131,16 +149,6 @@ cmd_setup-osx() {
      | grep "2.7" \
      | tail -1)"
     local latest_python3="$(eval ~/.anyenv/envs/pyenv/bin/pyenv install --list \
-     | grep -v - \
-     | grep -vE "([a-z]|[A-Z])" \
-     | tail -1)"
-  else
-    local latest_python2="$(eval pyenv install --list \
-     | grep -v - \
-     | grep -vE "([a-z]|[A-Z])" \
-     | grep "2.7" \
-     | tail -1)"
-    local latest_python3="$(eval pyenv install --list \
      | grep -v - \
      | grep -vE "([a-z]|[A-Z])" \
      | tail -1)"
