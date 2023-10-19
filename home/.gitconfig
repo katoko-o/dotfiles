@@ -19,7 +19,7 @@
 [http]
   postBuffer = 16M
 [user]
-	name = Kohei Kato
+	name = 
 	email = 
 [credential]
 	helper = osxkeychain
